@@ -1,10 +1,9 @@
-package com.example.backend.project.controller;
+package com.example.backend_project.controller;
 
+import com.example.backend_project.model.Prediction;
+import com.example.backend_project.repository.PredictionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import com.example.backend.project.model.Prediction;
-import com.example.backend.project.service.PredictionService;
 
 import java.util.List;
 
@@ -13,27 +12,14 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:5173")
 public class PredictionController {
 
-    @Autowired
-    private PredictionService predictionService;
+@Autowired
+private PredictionRepository predictionRepository;
 
-    @PostMapping
-    public Prediction savePrediction(@RequestBody Prediction prediction){
+@GetMapping("/{userId}")
+public List<Prediction> getPredictions(@PathVariable Long userId) {
 
-        return predictionService.savePrediction(prediction);
+return predictionRepository.findByUserId(userId);
 
-    }
+}
 
-    @GetMapping("/{userId}")
-    public List<Prediction> getPredictions(@PathVariable Long userId){
-
-        return predictionService.getUserPredictions(userId);
-
-    }
-
-    @GetMapping("/latest/{userId}")
-    public Prediction getLatestPrediction(@PathVariable Long userId){
-
-        return predictionService.getLatestPrediction(userId);
-
-    }
 }
