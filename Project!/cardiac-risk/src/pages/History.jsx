@@ -18,73 +18,71 @@ const COLORS = ["#22c55e", "#facc15", "#ef4444"]
 
 function History() {
 
-  const [predictions,setPredictions] = useState([])
   const { user } = useContext(AuthContext)
 
+  const [predictions,setPredictions] = useState([])
   const [lineData,setLineData] = useState([])
   const [pieData,setPieData] = useState([])
 
   useEffect(()=>{
 
-  if(!user) return
+    if(!user?.id) return
 
-  const fetchPredictions = async()=>{
+    const fetchPredictions = async()=>{
 
-    try{
+      try{
 
-      const res = await axios.get(
-        `http://localhost:8080/api/predictions/${user.id}`
-      )
+        const res = await axios.get(
+          `http://localhost:8080/api/predictions/${user.id}`
+        )
 
-      const data = res.data
+        const data = res.data || []
 
-      setPredictions(data)
+        setPredictions(data)
 
-      const line = data.map(item=>({
-        name: new Date(item.date).toLocaleDateString(),
-        risk: item.risk
-      }))
+        const line = data.map(item=>({
+          name: item.date ? new Date(item.date).toLocaleDateString() : "Unknown",
+          risk: item.risk || 0
+        }))
 
-      setLineData(line)
+        setLineData(line)
 
-      const low = data.filter(p=>p.level==="Low Risk").length
-      const medium = data.filter(p=>p.level==="Moderate Risk").length
-      const high = data.filter(p=>p.level==="High Risk").length
+        const low = data.filter(p=>p.level === "Low Risk").length
+        const medium = data.filter(p=>p.level === "Moderate Risk").length
+        const high = data.filter(p=>p.level === "High Risk").length
 
-      setPieData([
-        { name:"Low", value:low },
-        { name:"Medium", value:medium },
-        { name:"High", value:high }
-      ])
+        setPieData([
+          { name:"Low", value:low },
+          { name:"Medium", value:medium },
+          { name:"High", value:high }
+        ])
 
-    }catch(err){
-      console.log(err)
+      }catch(err){
+        console.log("History API error:",err)
+      }
+
     }
 
-  }
+    fetchPredictions()
 
-  fetchPredictions()
-
-},[user])
+  },[user])
 
   return (
 
     <div className="p-6 bg-gray-100 min-h-screen">
 
-      {/* Charts Section */}
       <div className="grid grid-cols-3 gap-4 mb-6">
 
-        {/* Line Chart */}
         <div className="col-span-2 bg-white p-4 rounded-xl shadow">
 
           <h3 className="font-semibold mb-3">
             Risk Trend Overview
           </h3>
 
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" height={220}>
             <LineChart data={lineData}>
               <XAxis dataKey="name"/>
-              <YAxis/>
+              <YAxis domain={[0,100]}/>
               <Tooltip/>
               <Line
                 type="monotone"
@@ -97,7 +95,6 @@ function History() {
 
         </div>
 
-        {/* Pie Chart */}
         <div className="bg-white p-4 rounded-xl shadow flex flex-col items-center">
 
           <h3 className="font-semibold mb-4">
@@ -114,7 +111,7 @@ function History() {
             >
 
               {pieData.map((entry,index)=>(
-                <Cell key={index} fill={COLORS[index]}/>
+                <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
 
             </Pie>
@@ -125,14 +122,11 @@ function History() {
 
       </div>
 
-      {/* Prediction History Table */}
       <div className="bg-white rounded-xl shadow p-4">
 
-        <div className="flex justify-between mb-4">
-          <h3 className="font-semibold text-lg">
-            Prediction History
-          </h3>
-        </div>
+        <h3 className="font-semibold text-lg mb-4">
+          Prediction History
+        </h3>
 
         <table className="w-full text-left">
 
@@ -147,29 +141,41 @@ function History() {
 
           <tbody>
 
-          {predictions.map((item,index)=>(
+          {predictions.length === 0 ? (
 
-            <tr key={index} className="border-b">
-
-              <td className="py-2">
-                {new Date(item.date).toLocaleDateString()}
+            <tr>
+              <td colSpan="4" className="text-center py-6 text-gray-500">
+                No prediction history available
               </td>
-
-              <td>
-                {item.risk}%
-              </td>
-
-              <td className="font-semibold">
-                {item.level}
-              </td>
-
-              <td>
-                {item.prediction}
-              </td>
-
             </tr>
 
-          ))}
+          ) : (
+
+            predictions.map((item,index)=>(
+
+              <tr key={index} className="border-b">
+
+                <td className="py-2">
+                  {item.date ? new Date(item.date).toLocaleDateString() : "N/A"}
+                </td>
+
+                <td>
+                  {item.risk}%
+                </td>
+
+                <td className="font-semibold">
+                  {item.level}
+                </td>
+
+                <td>
+                  {item.prediction}
+                </td>
+
+              </tr>
+
+            ))
+
+          )}
 
           </tbody>
 
